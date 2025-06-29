@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
+import ScrollVelocity from './ScrollVelocity';
+import ClickSpark from './ClickSpark';
 
 const translations = {
   en: {
@@ -20,7 +22,32 @@ const translations = {
     messageSent: 'Message Sent!',
     faq: 'FAQ & Safety Tips',
     quickExit: 'Quick Exit',
-    warning: 'Note: The official SHe-Box site may show a security warning due to an expired certificate. Proceed only if you trust the site.'
+    warning: 'Note: The official SHe-Box site may show a security warning due to an expired certificate. Proceed only if you trust the site.',
+    messaging: 'Quick Messaging',
+    quickMessage: 'Quick Message',
+    quickMessagePlaceholder: 'Type your message here...',
+    sendQuickMessage: 'Send Quick Message',
+    quickMessageSent: 'Quick Message Sent!',
+    templates: 'Message Templates',
+    safeArrival: 'Safe Arrival',
+    runningLate: 'Running Late',
+    needHelp: 'Need Help',
+    checkIn: 'Check In',
+    sendTemplate: 'Send Template',
+    templateSent: 'Template Sent!',
+    scheduledMessage: 'Scheduled Message',
+    scheduleFor: 'Schedule for',
+    scheduleMessage: 'Schedule Message',
+    messageScheduled: 'Message Scheduled!',
+    messageHistory: 'Message History',
+    noMessages: 'No messages yet',
+    recipients: 'Recipients (optional)',
+    recipientsPlaceholder: 'Enter email addresses separated by commas',
+    location: 'Include Location',
+    customMessage: 'Custom Message',
+    customMessagePlaceholder: 'Type your custom message...',
+    sendCustomMessage: 'Send Custom Message',
+    customMessageSent: 'Custom Message Sent!'
   },
   hi: {
     title: 'महिला सुरक्षा पोर्टल',
@@ -40,7 +67,32 @@ const translations = {
     messageSent: 'संदेश भेजा गया!',
     faq: 'सामान्य प्रश्न और सुरक्षा सुझाव',
     quickExit: 'त्वरित निकास',
-    warning: 'नोट: आधिकारिक SHe-Box साइट में प्रमाणपत्र की समाप्ति के कारण सुरक्षा चेतावनी दिखाई दे सकती है। केवल तभी आगे बढ़ें जब आप साइट पर भरोसा करते हों।'
+    warning: 'नोट: आधिकारिक SHe-Box साइट में प्रमाणपत्र की समाप्ति के कारण सुरक्षा चेतावनी दिखाई दे सकती है। केवल तभी आगे बढ़ें जब आप साइट पर भरोसा करते हों।',
+    messaging: 'त्वरित संदेश',
+    quickMessage: 'त्वरित संदेश',
+    quickMessagePlaceholder: 'यहां अपना संदेश टाइप करें...',
+    sendQuickMessage: 'त्वरित संदेश भेजें',
+    quickMessageSent: 'त्वरित संदेश भेजा गया!',
+    templates: 'संदेश टेम्पलेट',
+    safeArrival: 'सुरक्षित पहुंच',
+    runningLate: 'देर हो रही है',
+    needHelp: 'मदद चाहिए',
+    checkIn: 'चेक इन',
+    sendTemplate: 'टेम्पलेट भेजें',
+    templateSent: 'टेम्पलेट भेजा गया!',
+    scheduledMessage: 'शेड्यूल्ड संदेश',
+    scheduleFor: 'शेड्यूल के लिए',
+    scheduleMessage: 'संदेश शेड्यूल करें',
+    messageScheduled: 'संदेश शेड्यूल किया गया!',
+    messageHistory: 'संदेश इतिहास',
+    noMessages: 'अभी तक कोई संदेश नहीं',
+    recipients: 'प्राप्तकर्ता (वैकल्पिक)',
+    recipientsPlaceholder: 'कॉमा से अलग किए गए ईमेल पते दर्ज करें',
+    location: 'लोकेशन शामिल करें',
+    customMessage: 'कस्टम संदेश',
+    customMessagePlaceholder: 'अपना कस्टम संदेश टाइप करें...',
+    sendCustomMessage: 'कस्टम संदेश भेजें',
+    customMessageSent: 'कस्टम संदेश भेजा गया!'
   }
 };
 
@@ -81,6 +133,24 @@ function App() {
   const [contactError, setContactError] = useState('');
   const [copied, setCopied] = useState('');
   const [quote] = useState(quotes[Math.floor(Math.random() * quotes.length)]);
+  
+  // New messaging states
+  const [quickMessage, setQuickMessage] = useState('');
+  const [quickMessageSent, setQuickMessageSent] = useState(false);
+  const [quickMessageError, setQuickMessageError] = useState('');
+  const [templateSent, setTemplateSent] = useState(false);
+  const [templateError, setTemplateError] = useState('');
+  const [scheduledMessage, setScheduledMessage] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('');
+  const [messageScheduled, setMessageScheduled] = useState(false);
+  const [scheduleError, setScheduleError] = useState('');
+  const [customMessage, setCustomMessage] = useState('');
+  const [customMessageSent, setCustomMessageSent] = useState(false);
+  const [customMessageError, setCustomMessageError] = useState('');
+  const [recipients, setRecipients] = useState('');
+  const [includeLocation, setIncludeLocation] = useState(true);
+  const [messageHistory, setMessageHistory] = useState([]);
+  const [showMessageHistory, setShowMessageHistory] = useState(false);
 
   const handleCopy = (number) => {
     navigator.clipboard.writeText(number);
@@ -155,6 +225,171 @@ function App() {
     window.location.href = 'https://www.google.com';
   };
 
+  // Get location helper function
+  const getLocation = async () => {
+    if (!includeLocation) return '';
+    if (navigator.geolocation) {
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+        });
+        return `Lat: ${position.coords.latitude}, Lng: ${position.coords.longitude}`;
+      } catch (error) {
+        console.log('Location not available');
+        return '';
+      }
+    }
+    return '';
+  };
+
+  // Quick message handler
+  const handleQuickMessage = async () => {
+    if (!quickMessage.trim()) return;
+    
+    setQuickMessageSent(false);
+    setQuickMessageError('');
+    
+    try {
+      const location = await getLocation();
+      const res = await fetch('http://localhost:5000/quick-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: quickMessage, 
+          recipients: recipients || undefined,
+          location 
+        }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setQuickMessageSent(true);
+        setQuickMessage('');
+        setTimeout(() => setQuickMessageSent(false), 3000);
+        loadMessageHistory();
+      } else {
+        setQuickMessageError('Failed to send quick message.');
+      }
+    } catch (err) {
+      setQuickMessageError('Failed to send quick message.');
+    }
+  };
+
+  // Template message handler
+  const handleTemplateMessage = async (templateKey) => {
+    setTemplateSent(false);
+    setTemplateError('');
+    
+    try {
+      const location = await getLocation();
+      const res = await fetch('http://localhost:5000/template-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          templateKey, 
+          language: lang,
+          recipients: recipients || undefined,
+          location 
+        }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setTemplateSent(true);
+        setTimeout(() => setTemplateSent(false), 3000);
+        loadMessageHistory();
+      } else {
+        setTemplateError('Failed to send template message.');
+      }
+    } catch (err) {
+      setTemplateError('Failed to send template message.');
+    }
+  };
+
+  // Scheduled message handler
+  const handleScheduledMessage = async () => {
+    if (!scheduledMessage.trim() || !scheduledTime) return;
+    
+    setMessageScheduled(false);
+    setScheduleError('');
+    
+    try {
+      const location = await getLocation();
+      const res = await fetch('http://localhost:5000/schedule-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: scheduledMessage, 
+          scheduledTime,
+          recipients: recipients || undefined,
+          location 
+        }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setMessageScheduled(true);
+        setScheduledMessage('');
+        setScheduledTime('');
+        setTimeout(() => setMessageScheduled(false), 3000);
+        loadMessageHistory();
+      } else {
+        setScheduleError('Failed to schedule message.');
+      }
+    } catch (err) {
+      setScheduleError('Failed to schedule message.');
+    }
+  };
+
+  // Custom message handler
+  const handleCustomMessage = async () => {
+    if (!customMessage.trim()) return;
+    
+    setCustomMessageSent(false);
+    setCustomMessageError('');
+    
+    try {
+      const location = await getLocation();
+      const res = await fetch('http://localhost:5000/quick-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: customMessage, 
+          recipients: recipients || undefined,
+          location 
+        }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setCustomMessageSent(true);
+        setCustomMessage('');
+        setTimeout(() => setCustomMessageSent(false), 3000);
+        loadMessageHistory();
+      } else {
+        setCustomMessageError('Failed to send custom message.');
+      }
+    } catch (err) {
+      setCustomMessageError('Failed to send custom message.');
+    }
+  };
+
+  // Load message history
+  const loadMessageHistory = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/messages');
+      const data = await res.json();
+      setMessageHistory(data.messages || []);
+    } catch (err) {
+      console.log('Failed to load message history');
+    }
+  };
+
+  // Load message history on component mount
+  useEffect(() => {
+    loadMessageHistory();
+  }, []);
+
   return (
     <div className="App">
       <div className="top-bar">
@@ -173,6 +408,7 @@ function App() {
           <span className="quote">{quote}</span>
         </div>
       </header>
+      <ScrollVelocity texts={['WOMEN SAFETY']} velocity={80} className="custom-scroll-text" />
       {/* SVG Divider */}
       <svg className="divider" viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M0,32L48,37.3C96,43,192,53,288,58.7C384,64,480,64,576,58.7C672,53,768,43,864,53.3C960,64,1056,96,1152,101.3C1248,107,1344,85,1392,74.7L1440,64V0H1392C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0H0Z"></path></svg>
       <main>
@@ -183,6 +419,139 @@ function App() {
           </button>
           {sosError && <p className="error-msg">{sosError}</p>}
           <p className="sos-info">{t.sosInfo}</p>
+        </section>
+
+        <section className="messaging-section">
+          <h2>{t.messaging}</h2>
+          
+          {/* Recipients and Location Settings */}
+          <div className="message-settings">
+            <input
+              type="text"
+              placeholder={t.recipientsPlaceholder}
+              value={recipients}
+              onChange={(e) => setRecipients(e.target.value)}
+              className="recipients-input"
+            />
+            <label className="location-checkbox">
+              <input
+                type="checkbox"
+                checked={includeLocation}
+                onChange={(e) => setIncludeLocation(e.target.checked)}
+              />
+              {t.location}
+            </label>
+          </div>
+
+          {/* Quick Message */}
+          <div className="quick-message-container">
+            <h3>{t.quickMessage}</h3>
+            <div className="quick-message-input">
+              <input
+                type="text"
+                placeholder={t.quickMessagePlaceholder}
+                value={quickMessage}
+                onChange={(e) => setQuickMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleQuickMessage()}
+              />
+              <button onClick={handleQuickMessage} disabled={!quickMessage.trim() || quickMessageSent}>
+                {quickMessageSent ? t.quickMessageSent : t.sendQuickMessage}
+              </button>
+            </div>
+            {quickMessageError && <p className="error-msg">{quickMessageError}</p>}
+          </div>
+
+          {/* Message Templates */}
+          <div className="templates-container">
+            <h3>{t.templates}</h3>
+            <div className="template-buttons">
+              <button onClick={() => handleTemplateMessage('safe-arrival')} disabled={templateSent}>
+                {t.safeArrival}
+              </button>
+              <button onClick={() => handleTemplateMessage('running-late')} disabled={templateSent}>
+                {t.runningLate}
+              </button>
+              <button onClick={() => handleTemplateMessage('need-help')} disabled={templateSent}>
+                {t.needHelp}
+              </button>
+              <button onClick={() => handleTemplateMessage('check-in')} disabled={templateSent}>
+                {t.checkIn}
+              </button>
+            </div>
+            {templateError && <p className="error-msg">{templateError}</p>}
+            {templateSent && <p className="success-msg">{t.templateSent}</p>}
+          </div>
+
+          {/* Custom Message */}
+          <div className="custom-message-container">
+            <h3>{t.customMessage}</h3>
+            <textarea
+              placeholder={t.customMessagePlaceholder}
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              rows="3"
+            />
+            <button onClick={handleCustomMessage} disabled={!customMessage.trim() || customMessageSent}>
+              {customMessageSent ? t.customMessageSent : t.sendCustomMessage}
+            </button>
+            {customMessageError && <p className="error-msg">{customMessageError}</p>}
+          </div>
+
+          {/* Scheduled Message */}
+          <div className="scheduled-message-container">
+            <h3>{t.scheduledMessage}</h3>
+            <div className="schedule-inputs">
+              <textarea
+                placeholder={t.customMessagePlaceholder}
+                value={scheduledMessage}
+                onChange={(e) => setScheduledMessage(e.target.value)}
+                rows="3"
+              />
+              <input
+                type="datetime-local"
+                value={scheduledTime}
+                onChange={(e) => setScheduledTime(e.target.value)}
+                min={new Date().toISOString().slice(0, 16)}
+              />
+              <button onClick={handleScheduledMessage} disabled={!scheduledMessage.trim() || !scheduledTime || messageScheduled}>
+                {messageScheduled ? t.messageScheduled : t.scheduleMessage}
+              </button>
+            </div>
+            {scheduleError && <p className="error-msg">{scheduleError}</p>}
+          </div>
+
+          {/* Message History */}
+          <div className="message-history-container">
+            <h3>{t.messageHistory}</h3>
+            <button 
+              className="toggle-history-btn"
+              onClick={() => setShowMessageHistory(!showMessageHistory)}
+            >
+              {showMessageHistory ? 'Hide History' : 'Show History'}
+            </button>
+            {showMessageHistory && (
+              <div className="message-history">
+                {messageHistory.length === 0 ? (
+                  <p>{t.noMessages}</p>
+                ) : (
+                  <div className="history-list">
+                    {messageHistory.map((msg) => (
+                      <div key={msg.id} className="history-item">
+                        <div className="history-header">
+                          <span className="history-type">{msg.type}</span>
+                          <span className="history-time">
+                            {new Date(msg.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        {msg.message && <p className="history-message">{msg.message}</p>}
+                        {msg.location && <p className="history-location">📍 {msg.location}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </section>
         <section className="info-section">
           <h2>{t.resources}</h2>
