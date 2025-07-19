@@ -563,7 +563,7 @@ footer {
   font-size: 1rem;
   font-family: inherit;
   resize: vertical;
-  min-height: 80px;
+  min-height: 48px;
   transition: border-color 0.2s;
   margin-bottom: 1rem;
 }
@@ -615,7 +615,7 @@ footer {
   font-size: 1rem;
   font-family: inherit;
   resize: vertical;
-  min-height: 80px;
+  min-height: 48px;
   transition: border-color 0.2s;
 }
 
@@ -770,4 +770,18 @@ footer {
     align-items: flex-start;
     gap: 0.5rem;
   }
+}
+
+.custom-message-container,
+.scheduled-message-container {
+  max-width: 95%;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.custom-message-container textarea,
+.scheduled-message-container textarea {
+  width: 100%;
+  box-sizing: border-box;
 }
