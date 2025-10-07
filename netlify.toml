@@ -1,0 +1,12 @@
+[build]
+  base = "frontend"
+  command = "npm ci && npm run build"
+  publish = "build"
+
+# Ensure SPA routes fall back to index.html (backup to _redirects)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+
