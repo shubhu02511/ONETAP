@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import ScrollVelocity from './ScrollVelocity';
-import ClickSpark from './ClickSpark';
 
 const translations = {
   en: {
